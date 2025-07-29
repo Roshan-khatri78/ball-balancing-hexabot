@@ -3,6 +3,8 @@
 A final-year BEI major project (2078 batch) from **Purwanchal Campus, Dharan-08, Sunsari** under **IOE**, this system balances a ball on a hexagonal platform using real-time image processing and servo control.
 
 ---
+## Project proposal
+You can download and view the full [Project Proposal PDF](docs/major_proposal_optimized.pdf) here.
 
 ## 🎯 Project Overview
 
