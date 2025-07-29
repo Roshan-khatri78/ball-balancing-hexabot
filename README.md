@@ -79,7 +79,6 @@ The system includes a **5-button interface** with an **I2C LCD display** allowin
 
 ## 👥 Team Members — IOE 2078 Batch
 
-- Roshan Khatri  
 - Rudra Khatri  
 - Sneha Yadav  
 - Bishakha Pokhrel  
