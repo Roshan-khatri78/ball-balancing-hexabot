@@ -51,3 +51,42 @@ The system includes a **5-button interface** with an **I2C LCD display** allowin
 
 ## 🏗️ Project Structure
 
+- `ball-balancing-hexabot/`
+  - `docs/`             - Diagrams and documentation
+  - `hardware/`         - CAD models for platform & mounts
+  - `firmware/`         - ESP32/Arduino code for servos, LCD, buttons
+  - `software/`         - Python OpenCV & PID logic
+  - `web_interface/`    - (Optional) Live tuning interface
+  - `simulation/`       - (Optional) Simulated environment
+  - `requirements.txt`  - Python dependencies
+  - `README.md`         - This file
+  - `.gitignore`        - Git ignore rules
+
+---
+
+## 👨‍💻 Technologies Used
+
+- Python 3
+- OpenCV
+- ESP32 + Arduino IDE
+- MG996R Servo Motors
+- PID Control Logic
+- I2C LCD Display
+- 5 Push Buttons for User Input
+- Flask (optional UI)
+
+---
+
+## 👥 Team Members — IOE 2078 Batch
+
+- Roshan Khatri  
+- Rudra Khatri  
+- Sneha Yadav  
+- Bishakha Pokhrel  
+- Sushant Dahal  
+
+---
+
+## 📜 License
+
+This project is licensed under the MIT License. See the `LICENSE` file for details.
