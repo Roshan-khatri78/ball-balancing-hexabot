@@ -1,0 +1,54 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.env
+.env
+*.egg-info/
+*.log
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Arduino/ESP32
+*.ino.*
+*.elf
+*.hex
+*.bin
+*.eep
+.build/
+.pio/
+.idea/
+
+# CAD files
+*.FCStd1
+*.bak1
+*.bak
+*.tmp
+*.stl.tmp
+
+# OS & system files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Node / Flask (if using)
+node_modules/
+*.db
+*.sqlite3
+*.json
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+
+# Simulations / builds
+simulation/output/
+firmware/build/
+software/__pycache__/
+
+# Git backup files
+*.swp
+*.swo
+*~
