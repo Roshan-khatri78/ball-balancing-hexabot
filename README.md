@@ -346,7 +346,7 @@ project-astra/
 | Name | Specialization | Key Contributions | Contact |
 |------|----------------|-------------------|---------|
 | **Sneha Yadav** | AI/ML & Software Architecture | AI algorithms, predictive compensation, real-time visualization | [GitHub](https://github.com/rudrakhatri) |
-| **Rudra khatri** | Hardware Integration & Control Systems | Servo control, platform design, system integration | [GitHub](https://github.com/snehayadav) |  
+| **Rudra khatri** | Hardware Integration & Control Systems | Servo control, platform design, system integration | [GitHub](https://github.com/Roshan-khatri78/) |  
 | **Bishakha Pokhrel** | Testing & Documentation  | ESP32 firmware, adaptive PID, performance optimization | [GitHub](https://github.com/bishakhapokhrel) |
 | **Susant Dahal** | Embedded Systems & PID Control | System validation, user interface, technical documentation | [GitHub](https://github.com/sushantdahal) |
 
