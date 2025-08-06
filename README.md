@@ -22,7 +22,7 @@ The **real hardware implementation (Phase 2)** including servos, ESP32, LCD, and
 
 Detailed documentation, code, and visualization scripts for Phase 1 simulation are located inside the [`Phase1/`](./Phase1) folder.
 
-Visit [`Phase1/README.md`](./Phase1/README.md) for comprehensive info on AI algorithms, simulation setup, usage, and architecture.
+Visit [`Phase1/Readme.md`](./Phase1/Readme.md) for comprehensive info on AI algorithms, simulation setup, usage, and architecture.
 
 ---
 
