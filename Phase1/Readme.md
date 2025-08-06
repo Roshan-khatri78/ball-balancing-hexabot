@@ -245,7 +245,7 @@ Ready for hardware implementation:
 - [Project Proposal](docs/major_proposal_optimized.pdf) - Academic project proposal
 - [Pin Configuration](docs/Pin%20Configuration.md) - Hardware interface planning
 - [Firmware Reference](firmware/midtermdefense.ino) - ESP32 control system code 
-- [Simulation/Py](Phase1/simulation/cls) -simualtion using matplotlib,pyserail,numpy
+- [Simulation/Py](Phase1/simulation/) -simualtion using matplotlib,pyserail,numpy
 
 ---
 
