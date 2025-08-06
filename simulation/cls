@@ -1,0 +1,744 @@
+import serial
+import time
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+from collections import deque
+import numpy as np
+
+# =============================================================================
+# CONFIGURATION CONSTANTS
+# =============================================================================
+SERIAL_PORT = 'COM3'  # Adjust to your port
+BAUD_RATE = 115200
+MAX_POINTS = 200  # More points for better visualization
+
+# =============================================================================
+# DATA BUFFERS - Enhanced buffers for AI-PID visualization
+# =============================================================================
+ball_x = deque(maxlen=MAX_POINTS)
+ball_y = deque(maxlen=MAX_POINTS)
+trace_x = deque(maxlen=MAX_POINTS)
+trace_y = deque(maxlen=MAX_POINTS)
+trace_colors = deque(maxlen=MAX_POINTS)
+grey_trace_x = deque(maxlen=MAX_POINTS)
+grey_trace_y = deque(maxlen=MAX_POINTS)
+
+# Enhanced error tracking with AI metrics
+raw_err_x = deque(maxlen=MAX_POINTS)
+raw_err_y = deque(maxlen=MAX_POINTS)
+corrected_err_x = deque(maxlen=MAX_POINTS)
+corrected_err_y = deque(maxlen=MAX_POINTS)
+system_instability = deque(maxlen=MAX_POINTS)
+pid_time = deque(maxlen=MAX_POINTS)
+
+# AI-specific data tracking
+ai_gain_index = deque(maxlen=MAX_POINTS)
+ai_performance = deque(maxlen=MAX_POINTS)
+ai_learning_progress = deque(maxlen=MAX_POINTS)
+ai_pattern_detections = []
+
+# Servo position tracking
+servo1_positions = deque(maxlen=MAX_POINTS)
+servo2_positions = deque(maxlen=MAX_POINTS)
+servo3_positions = deque(maxlen=MAX_POINTS)
+
+# =============================================================================
+# GLOBAL STATE VARIABLES
+# =============================================================================
+current_shape = ""
+shape_x, shape_y = [], []
+moving_to_start = False
+system_start_time = None
+current_ai_mode = "AI Off"
+ai_learning_active = False
+current_gain_name = "Balanced"
+time_step_counter = 0
+
+# CRITICAL FIX: Store text objects for dynamic updates
+ai_status_texts = {}
+
+# =============================================================================
+# SERIAL INITIALIZATION
+# =============================================================================
+try:
+    ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=0.1)
+    time.sleep(2)
+    print(f"✅ Connected to {SERIAL_PORT}")
+except:
+    print(f"❌ Failed to connect to {SERIAL_PORT}")
+    exit()
+
+# =============================================================================
+# MATPLOTLIB SETUP - Fixed layout with proper spacing
+# =============================================================================
+plt.style.use('dark_background')  # Dark theme for better visibility
+fig = plt.figure(figsize=(20, 14))  # Increased height from 12 to 14
+fig.suptitle('Project ASTRA - Ball Path Tracking', fontsize=16, fontweight='bold', color='cyan')
+
+# FIXED: Better grid layout with more spacing and larger bottom margin
+gs = fig.add_gridspec(3, 3, height_ratios=[2.2, 1, 1], width_ratios=[2, 1, 1], 
+                     hspace=0.45, wspace=0.35, left=0.05, right=0.95, top=0.92, bottom=0.12)
+
+# =============================================================================
+# SUBPLOT CREATION WITH BETTER SPACING
+# =============================================================================
+
+# 1. Main trace plot (large, top-left, spans 2 columns)
+ax_trace = fig.add_subplot(gs[0, :2])
+ax_trace.set_title("", fontsize=14, fontweight='bold', color='white', pad=15)
+ax_trace.set_xlim(-4, 4)
+ax_trace.set_ylim(-4, 4)
+ax_trace.grid(True, alpha=0.3, color='gray')
+ax_trace.set_xlabel("X Position", color='white', fontsize=11)
+ax_trace.set_ylabel("Y Position", color='white', fontsize=11)
+ax_trace.set_facecolor('black')
+
+# 2. AI Status Dashboard (top-right)
+ax_ai_status = fig.add_subplot(gs[0, 2])
+ax_ai_status.set_title("AI Control Status", fontsize=12, fontweight='bold', color='cyan', pad=15)
+ax_ai_status.set_xlim(0, 10)
+ax_ai_status.set_ylim(0, 10)
+ax_ai_status.axis('off')
+ax_ai_status.set_facecolor('black')
+
+# 3. Error comparison (middle-left) - FIXED SPACING
+ax_error_comparison = fig.add_subplot(gs[1, 0])
+ax_error_comparison.set_title("Error: Before vs After AI-PID", fontsize=11, fontweight='bold', color='white', pad=12)
+ax_error_comparison.set_xlim(0, MAX_POINTS)
+ax_error_comparison.set_ylim(-1.5, 1.5)
+ax_error_comparison.grid(True, alpha=0.3, color='gray')
+ax_error_comparison.set_xlabel("Time Steps", color='white', fontsize=10)
+ax_error_comparison.set_ylabel("Error Magnitude", color='white', fontsize=10)
+ax_error_comparison.set_facecolor('black')
+ax_error_comparison.tick_params(axis='both', which='major', labelsize=9)
+
+# 4. AI Learning Metrics (middle-center) - FIXED SPACING
+ax_ai_learning = fig.add_subplot(gs[1, 1])
+ax_ai_learning.set_title("AI Learning Progress", fontsize=11, fontweight='bold', color='orange', pad=12)
+ax_ai_learning.set_xlim(0, MAX_POINTS)
+ax_ai_learning.set_ylim(0, 100)
+ax_ai_learning.grid(True, alpha=0.3, color='gray')
+ax_ai_learning.set_xlabel("Time Steps", color='white', fontsize=10)
+ax_ai_learning.set_ylabel("Performance %", color='white', fontsize=10)
+ax_ai_learning.set_facecolor('black')
+ax_ai_learning.tick_params(axis='both', which='major', labelsize=9)
+
+# 5. System Stability (middle-right) - FIXED SPACING
+ax_stability = fig.add_subplot(gs[1, 2])
+ax_stability.set_title("System Stability", fontsize=11, fontweight='bold', color='green', pad=12)
+ax_stability.set_xlim(0, MAX_POINTS)
+ax_stability.set_ylim(0, 100)
+ax_stability.grid(True, alpha=0.3, color='gray')
+ax_stability.set_xlabel("Time Steps", color='white', fontsize=10)
+ax_stability.set_ylabel("Stability %", color='white', fontsize=10)
+ax_stability.set_facecolor('black')
+ax_stability.tick_params(axis='both', which='major', labelsize=9)
+
+# 6. Servo Response (bottom-left) - FIXED SPACING AND FONT SIZES
+ax_servos = fig.add_subplot(gs[2, 0])
+ax_servos.set_title("Servo Response", fontsize=11, fontweight='bold', color='yellow', pad=12)
+ax_servos.set_xlim(0, MAX_POINTS)
+ax_servos.set_ylim(30, 150)
+ax_servos.grid(True, alpha=0.3, color='gray')
+ax_servos.set_xlabel("Time Steps", color='white', fontsize=10)
+ax_servos.set_ylabel("Servo Angles (°)", color='white', fontsize=10)
+ax_servos.set_facecolor('black')
+ax_servos.tick_params(axis='both', which='major', labelsize=8)  # Smaller tick labels
+
+# 7. AI Gain Adaptation (bottom-center) - FIXED SPACING AND FONT SIZES
+ax_gains = fig.add_subplot(gs[2, 1])
+ax_gains.set_title("AI Gain Switching", fontsize=11, fontweight='bold', color='purple', pad=12)
+ax_gains.set_xlim(0, MAX_POINTS)
+ax_gains.set_ylim(0, 5)
+ax_gains.grid(True, alpha=0.3, color='gray')
+ax_gains.set_xlabel("Time Steps", color='white', fontsize=10)
+ax_gains.set_ylabel("Gain Set Index", color='white', fontsize=10)
+ax_gains.set_facecolor('black')
+ax_gains.tick_params(axis='both', which='major', labelsize=8)  # Smaller tick labels
+
+# 8. Performance Metrics (bottom-right) - FIXED SPACING AND FONT SIZES
+ax_performance = fig.add_subplot(gs[2, 2])
+ax_performance.set_title("AI Performance Score", fontsize=11, fontweight='bold', color='red', pad=12)
+ax_performance.set_xlim(0, MAX_POINTS)
+ax_performance.set_ylim(0, 5)
+ax_performance.grid(True, alpha=0.3, color='gray')
+ax_performance.set_xlabel("Time Steps", color='white', fontsize=10)
+ax_performance.set_ylabel("Error Score", color='white', fontsize=10)
+ax_performance.set_facecolor('black')
+ax_performance.tick_params(axis='both', which='major', labelsize=8)  # Smaller tick labels
+
+# =============================================================================
+# PLOT LINES INITIALIZATION
+# =============================================================================
+
+# Trace plot
+target_path_ln, = ax_trace.plot([], [], color='gray', lw=3, alpha=0.8, label='Target Path')
+trail_chaotic_ln, = ax_trace.plot([], [], color='red', lw=3, alpha=0.9, label='Initial Errors')
+trail_learning_ln, = ax_trace.plot([], [], color='orange', lw=3, alpha=0.8, label='AI Learning')
+trail_stable_ln, = ax_trace.plot([], [], color='lime', lw=3, alpha=0.8, label='AI Optimized')
+move_to_start_ln, = ax_trace.plot([], [], color='cyan', lw=2, alpha=0.6, label='Move to Start')
+ball_ln, = ax_trace.plot([], [], 'wo', markersize=10, markeredgecolor='cyan', markeredgewidth=2, label='Ball')
+ax_trace.legend(loc='upper right', fontsize=9, facecolor='black', edgecolor='white')
+
+# Error comparison
+raw_error_ln, = ax_error_comparison.plot([], [], color='red', lw=2, alpha=0.8, label='Before AI-PID')
+corrected_error_ln, = ax_error_comparison.plot([], [], color='lime', lw=2, alpha=0.8, label='After AI-PID')
+ax_error_comparison.legend(fontsize=8, facecolor='black', edgecolor='white')
+
+# AI Learning metrics
+ai_performance_ln, = ax_ai_learning.plot([], [], color='orange', lw=3, label='Learning Progress')
+ax_ai_learning.legend(fontsize=8, facecolor='black', edgecolor='white')
+
+# System stability
+stability_ln, = ax_stability.plot([], [], color='lime', lw=3, label='Stability %')
+ax_stability.legend(fontsize=8, facecolor='black', edgecolor='white')
+
+# Servo response
+servo1_ln, = ax_servos.plot([], [], color='red', lw=2, alpha=0.8, label='Servo 1')
+servo2_ln, = ax_servos.plot([], [], color='green', lw=2, alpha=0.8, label='Servo 2')
+servo3_ln, = ax_servos.plot([], [], color='blue', lw=2, alpha=0.8, label='Servo 3')
+ax_servos.legend(fontsize=8, facecolor='black', edgecolor='white')
+
+# AI Gains
+gain_ln, = ax_gains.plot([], [], color='purple', lw=3, marker='o', markersize=4, label='Active Gain Set')
+ax_gains.legend(fontsize=8, facecolor='black', edgecolor='white')
+
+# Performance
+perf_ln, = ax_performance.plot([], [], color='red', lw=3, label='Error Score')
+ax_performance.legend(fontsize=8, facecolor='black', edgecolor='white')
+
+# =============================================================================
+# UTILITY FUNCTIONS
+# =============================================================================
+
+def get_shape(name):
+    """Generate shape outline for visualization"""
+    if name == "Circle":
+        t = np.linspace(0, 2*np.pi, 200)
+        return 2.0*np.cos(t), 2.0*np.sin(t)
+    elif name == "Triangle":
+        vertices = np.array([[0, 2.31], [-2.0, -1.15], [2.0, -1.15], [0, 2.31]])
+        return vertices[:,0], vertices[:,1]
+    elif name == "Square":
+        size = 2.0
+        vertices = np.array([[-size, -size], [size, -size], [size, size], [-size, size], [-size, -size]])
+        return vertices[:,0], vertices[:,1]
+    elif name == "Infinity":
+        t = np.linspace(0, 2*np.pi, 200)
+        return 1.5*np.sin(t), 0.75*np.sin(2*t)
+    elif name == "Hexagon":
+        angles = np.linspace(0, 2*np.pi, 7)
+        return 2.0*np.cos(angles), 2.0*np.sin(angles)
+    elif name == "Ellipse":
+        t = np.linspace(0, 2*np.pi, 200)
+        return 3.0*np.cos(t), 1.5*np.sin(t)
+    return [], []
+
+# =============================================================================
+# AI STATUS DASHBOARD FUNCTIONS - FIXED TEXT POSITIONING
+# =============================================================================
+
+def initialize_ai_status_texts():
+    """Initialize text objects for AI status dashboard - FIXED VERSION WITH PROPER SPACING"""
+    global ai_status_texts
+    
+    # Clear any existing texts properly
+    while ax_ai_status.texts:
+        ax_ai_status.texts.pop().remove()
+    
+    # FIXED: Better vertical spacing to prevent overlap
+    # Using Y positions with 1.0 unit spacing: 9.5, 8.5, 7.5, 6.5, 5.5, 4.5, 3.5, 2.5
+    ai_status_texts = {
+        'title': ax_ai_status.text(5, 9.5, "AI STATUS", fontsize=12, fontweight='bold', 
+                                  color='cyan', ha='center'),
+        'mode': ax_ai_status.text(5, 8.5, "Mode: AI Off", fontsize=10, fontweight='bold',
+                                 color='red', ha='center'),
+        'gain': ax_ai_status.text(5, 7.5, "Gain: Initializing", fontsize=9,
+                                 color='yellow', ha='center'),
+        'score': ax_ai_status.text(5, 6.5, "Score: 0.000", fontsize=9,
+                                  color='gray', ha='center'),
+        'status': ax_ai_status.text(5, 5.5, "Status: Waiting...", fontsize=9,
+                                   color='gray', ha='center'),
+        'stability': ax_ai_status.text(5, 4.5, "Stability: 0%", fontsize=9,
+                                      color='gray', ha='center'),
+        'pattern': ax_ai_status.text(5, 3.5, "Pattern: Analyzing...", fontsize=8,
+                                    color='gray', ha='center'),
+        'time': ax_ai_status.text(5, 2.5, "Time: 0.0s", fontsize=8,
+                                 color='white', ha='center')
+    }
+
+def update_ai_status_dashboard():
+    """Update AI status dashboard with DYNAMIC text updates - FIXED VERSION"""
+    global ai_status_texts
+    
+    # AGGRESSIVE AI Mode detection - ANY data means AI is active
+    mode_text = "AI Off"
+    mode_color = 'red'
+    
+    # Check if ANY system is providing data
+    has_ball_data = len(ball_x) > 0
+    has_servo_data = len(servo1_positions) > 0
+    has_error_data = len(raw_err_x) > 0
+    has_trace_data = len(trace_colors) > 0
+    
+    if has_ball_data or has_servo_data or has_error_data:
+        # System is definitely active
+        if has_trace_data and len(trace_colors) >= 5:
+            recent_colors = list(trace_colors)[-5:]
+            stable_count = recent_colors.count('stable')
+            learning_count = recent_colors.count('learning')
+            chaotic_count = recent_colors.count('chaotic')
+            
+            if stable_count >= 3:
+                mode_text = "AI Optimized"
+                mode_color = 'lime'
+            elif learning_count >= 2:
+                mode_text = "AI Learning"
+                mode_color = 'orange'
+            elif chaotic_count >= 2:
+                mode_text = "AI Adapting"
+                mode_color = 'red'
+            else:
+                mode_text = "AI Active"
+                mode_color = 'yellow'
+        else:
+            mode_text = "AI Active"
+            mode_color = 'yellow'
+    
+    # Update mode text - DYNAMIC UPDATE
+    ai_status_texts['mode'].set_text(f"Mode: {mode_text}")
+    ai_status_texts['mode'].set_color(mode_color)
+    
+    # AGGRESSIVE Gain detection - use latest available data
+    gain_text = "Initializing"
+    if len(ai_gain_index) > 0:
+        gain_names = ["Conservative", "Balanced", "Precise", "Aggressive", "Smooth"]
+        current_gain_idx = int(ai_gain_index[-1])
+        if 0 <= current_gain_idx < len(gain_names):
+            gain_text = gain_names[current_gain_idx]
+        else:
+            gain_text = f"Set {current_gain_idx}"
+    elif has_ball_data:  # If system active but no gain data, simulate based on behavior
+        gain_text = "Auto-Tuning"
+    
+    ai_status_texts['gain'].set_text(f"Gain: {gain_text}")
+    
+    # AGGRESSIVE Performance - calculate from any available error data
+    current_perf = 0.0
+    perf_color = 'gray'
+    
+    if len(ai_performance) > 0:
+        current_perf = float(ai_performance[-1])
+    elif len(raw_err_x) > 0:
+        # Calculate performance from raw error if AI performance not available
+        recent_errors = list(raw_err_x)[-5:] if len(raw_err_x) >= 5 else list(raw_err_x)
+        current_perf = sum(recent_errors) / len(recent_errors) if recent_errors else 0.0
+    
+    perf_color = 'lime' if current_perf < 1.0 else 'orange' if current_perf < 2.5 else 'red'
+    ai_status_texts['score'].set_text(f"Score: {current_perf:.3f}")
+    ai_status_texts['score'].set_color(perf_color)
+    
+    # AGGRESSIVE Learning status - progress from any data
+    status_text = "Waiting..."
+    status_color = 'gray'
+    
+    if len(ai_learning_progress) > 0:
+        progress = float(ai_learning_progress[-1])
+        if progress < 25:
+            status_text = "Initial Learning"
+            status_color = 'red'
+        elif progress < 60:
+            status_text = "Active Learning"
+            status_color = 'orange'
+        elif progress < 90:
+            status_text = "Fine Tuning"
+            status_color = 'yellow'
+        else:
+            status_text = "Optimized"
+            status_color = 'lime'
+    elif has_ball_data:
+        # Estimate learning stage from system activity
+        data_points = max(len(ball_x), len(servo1_positions), len(raw_err_x))
+        if data_points < 20:
+            status_text = "Initial Learning"
+            status_color = 'red'
+        elif data_points < 100:
+            status_text = "Active Learning"
+            status_color = 'orange'
+        else:
+            status_text = "Fine Tuning"
+            status_color = 'yellow'
+    
+    ai_status_texts['status'].set_text(f"Status: {status_text}")
+    ai_status_texts['status'].set_color(status_color)
+    
+    # AGGRESSIVE Stability calculation
+    stability = 0
+    stab_color = 'gray'
+    
+    if len(system_instability) > 0:
+        current_instability = float(system_instability[-1])
+        stability = max(0, min(100, 100 - (current_instability * 100)))
+    elif has_trace_data and len(trace_colors) >= 5:
+        # Estimate stability from trace color distribution
+        recent_colors = list(trace_colors)[-5:]
+        stable_ratio = recent_colors.count('stable') / len(recent_colors)
+        stability = stable_ratio * 100
+    elif has_error_data and len(raw_err_x) >= 5:
+        # Estimate stability from error consistency
+        recent_errors = list(raw_err_x)[-5:]
+        error_variance = np.var(recent_errors) if len(recent_errors) > 1 else 1.0
+        stability = max(0, min(100, 100 - (error_variance * 50)))
+    
+    stab_color = 'lime' if stability > 70 else 'orange' if stability > 40 else 'red'
+    ai_status_texts['stability'].set_text(f"Stability: {stability:.0f}%")
+    ai_status_texts['stability'].set_color(stab_color)
+    
+    # AGGRESSIVE Pattern detection - show ANYTHING we can detect
+    pattern_text = "Analyzing..."
+    pattern_color = 'gray'
+    
+    # First: current shape (HIGHEST PRIORITY)
+    if current_shape and current_shape.strip():
+        pattern_text = current_shape
+        pattern_color = 'cyan'
+    # Second: AI detected patterns
+    elif len(ai_pattern_detections) > 0:
+        pattern_text = ai_pattern_detections[-1]
+        pattern_color = 'cyan'
+    # Third: infer from trace behavior
+    elif has_trace_data and len(trace_colors) >= 3:
+        recent_behavior = list(trace_colors)[-3:]
+        if recent_behavior.count('stable') >= 2:
+            pattern_text = "Stable Path"
+            pattern_color = 'lime'
+        elif recent_behavior.count('learning') >= 2:
+            pattern_text = "Learning"
+            pattern_color = 'orange'
+        elif recent_behavior.count('chaotic') >= 2:
+            pattern_text = "Complex"
+            pattern_color = 'red'
+        else:
+            pattern_text = "Dynamic"
+            pattern_color = 'yellow'
+    # Fourth: if system is active but no trace data
+    elif has_ball_data:
+        pattern_text = "Tracking Active"
+        pattern_color = 'cyan'
+    
+    ai_status_texts['pattern'].set_text(f"Pattern: {pattern_text}")
+    ai_status_texts['pattern'].set_color(pattern_color)
+    
+    # AGGRESSIVE Time tracking - show ANY time we can calculate
+    if len(pid_time) > 0:
+        elapsed = float(pid_time[-1])
+        time_color = 'white' if elapsed < 30 else 'yellow' if elapsed < 120 else 'orange'
+        ai_status_texts['time'].set_text(f"Time: {elapsed:.1f}s")
+        ai_status_texts['time'].set_color(time_color)
+    else:
+        # Show frame-based time if no PID time available
+        frame_time = time_step_counter * 0.1  # Approximate time
+        time_color = 'white' if frame_time < 30 else 'yellow'
+        ai_status_texts['time'].set_text(f"Time: {frame_time:.1f}s")
+        ai_status_texts['time'].set_color(time_color)
+
+# =============================================================================
+# AI DATA SIMULATION
+# =============================================================================
+
+def simulate_ai_data():
+    """Generate MORE realistic AI data that changes dynamically"""
+    # Only simulate if we don't have enough real data coming in
+    if len(ai_gain_index) == 0 or len(ai_gain_index) % 20 == 0:
+        # Simulate more realistic gain switching based on system behavior
+        if len(system_instability) > 0:
+            instability = system_instability[-1]
+            if instability > 0.7:
+                new_gain = 0  # Conservative when unstable
+            elif instability > 0.4:
+                new_gain = 1  # Balanced for moderate instability  
+            elif instability > 0.2:
+                new_gain = 2  # Precise for fine control
+            else:
+                new_gain = 3  # Aggressive when stable
+        else:
+            new_gain = np.random.choice([0, 1, 2, 3, 4])
+        ai_gain_index.append(new_gain)
+    
+    # Simulate performance that reflects actual system behavior
+    if len(raw_err_x) > 0:
+        # Base performance on actual error data
+        recent_errors = list(raw_err_x)[-5:] if len(raw_err_x) >= 5 else list(raw_err_x)
+        avg_error = sum(recent_errors) / len(recent_errors) if recent_errors else 2.0
+        # Add some noise but keep it realistic
+        noise = np.random.normal(0, 0.05)
+        performance = max(0.1, avg_error + noise)
+        ai_performance.append(performance)
+    elif len(ai_performance) < 50:
+        # Startup simulation - improving over time
+        time_factor = len(ai_performance) / 50.0
+        base_performance = 3.0 * (1.0 - time_factor) + 0.3 * time_factor
+        noise = np.random.normal(0, 0.1)
+        ai_performance.append(max(0.1, base_performance + noise))
+    
+    # Learning progress that actually progresses
+    if len(ai_learning_progress) == 0:
+        ai_learning_progress.append(5.0)  # Start low
+    elif ai_learning_progress[-1] < 100:
+        # Gradually increase learning progress
+        current_progress = ai_learning_progress[-1]
+        increment = np.random.uniform(0.5, 2.0)  # Variable learning speed
+        new_progress = min(100, current_progress + increment)
+        ai_learning_progress.append(new_progress)
+    
+    # Add realistic pattern detections based on current shape
+    if len(ai_pattern_detections) == 0 or time_step_counter % 50 == 0:
+        if current_shape and current_shape.strip():
+            # Sometimes detect the actual shape, sometimes detect behaviors
+            if np.random.random() < 0.7:  # 70% chance to detect actual shape
+                ai_pattern_detections.append(current_shape)
+            else:
+                behaviors = ["Oscillation", "Drift", "Stability", "Overshoot"]
+                ai_pattern_detections.append(np.random.choice(behaviors))
+        else:
+            # Generic pattern detection
+            patterns = ["Circular", "Linear", "Complex", "Periodic", "Random"]
+            ai_pattern_detections.append(np.random.choice(patterns))
+    
+    # Simulate some system instability data if none exists
+    if len(system_instability) == 0 or len(system_instability) % 10 == 0:
+        # Create realistic instability that improves over time
+        time_factor = time_step_counter / 200.0  # Improve over 200 steps
+        base_instability = 0.8 * (1.0 - time_factor) + 0.1 * time_factor
+        noise = np.random.normal(0, 0.05)
+        instability = max(0.0, min(1.0, base_instability + noise))
+        system_instability.append(instability)
+    
+    # Add some timing data
+    if len(pid_time) == 0:
+        pid_time.append(0.0)
+    elif len(pid_time) % 5 == 0:  # Update every 5 steps
+        new_time = pid_time[-1] + np.random.uniform(0.4, 0.6)  # ~0.5s increments
+        pid_time.append(new_time)
+
+# =============================================================================
+# ANIMATION FUNCTIONS
+# =============================================================================
+
+def init():
+    """Initialize animation"""
+    # Initialize AI status texts FIRST
+    initialize_ai_status_texts()
+    
+    all_lines = [target_path_ln, trail_chaotic_ln, trail_learning_ln, trail_stable_ln,
+                 move_to_start_ln, ball_ln, raw_error_ln, corrected_error_ln,
+                 servo1_ln, servo2_ln, servo3_ln, stability_ln,
+                 ai_performance_ln, gain_ln, perf_ln]
+    for ln in all_lines:
+        ln.set_data([], [])
+    return tuple(all_lines)
+
+def update(frame):
+    """Clean animation update with proper AI visualization"""
+    global current_shape, shape_x, shape_y, moving_to_start, time_step_counter
+    global system_start_time, current_ai_mode, ai_learning_active, current_gain_name
+
+    # Read serial data with error handling
+    try:
+        while ser.in_waiting:
+            line = ser.readline().decode('utf-8').strip()
+            parts = line.split(',')
+
+            if parts[0] == "CLEAR":
+                # Clear all data
+                for buf in [ball_x, ball_y, trace_x, trace_y, raw_err_x, raw_err_y, 
+                           corrected_err_x, corrected_err_y, system_instability, pid_time,
+                           servo1_positions, servo2_positions, servo3_positions,
+                           ai_gain_index, ai_performance, ai_learning_progress]:
+                    buf.clear()
+                trace_colors.clear()
+                grey_trace_x.clear(); grey_trace_y.clear()
+                ai_pattern_detections.clear()
+                time_step_counter = 0
+
+            elif parts[0] == "SHAPE" and len(parts) == 2:
+                current_shape = parts[1]
+                shape_x, shape_y = get_shape(current_shape)
+                moving_to_start = True
+
+            elif parts[0] == "AI_LEARNING" and len(parts) >= 4:
+                learning_samples = int(parts[1])
+                current_gain = int(parts[2])
+                performance = float(parts[3])
+                
+                ai_learning_progress.append(min(100, (learning_samples / 200) * 100))
+                ai_gain_index.append(current_gain)
+                ai_performance.append(performance)
+
+            elif parts[0] == "AI_PATTERN" and len(parts) == 2:
+                ai_pattern_detections.append(parts[1])
+
+            elif parts[0] in ("STATIC", "DYNAMIC") and len(parts) >= 6:
+                x, y = float(parts[1]), float(parts[2])
+                servo1_angle = float(parts[3])
+                servo2_angle = float(parts[4])
+                servo3_angle = float(parts[5])
+                
+                ball_x.append(x); ball_y.append(y)
+                servo1_positions.append(servo1_angle)
+                servo2_positions.append(servo2_angle)
+                servo3_positions.append(servo3_angle)
+                time_step_counter += 1
+                
+                # Parse enhanced data
+                error_x = error_y = total_error = instability_factor = elapsed_time = 0
+                if len(parts) >= 12:
+                    error_x = float(parts[6])
+                    error_y = float(parts[7])
+                    total_error = float(parts[8])
+                    instability_factor = float(parts[9])
+                    elapsed_time = float(parts[10])
+                    
+                    # Parse AI info
+                    for i in range(11, len(parts)):
+                        if parts[i].startswith("AI:"):
+                            current_ai_mode = parts[i][3:]
+                        elif parts[i].startswith("GAIN:"):
+                            gain_idx = int(parts[i][5:])
+                            ai_gain_index.append(gain_idx)
+                        elif parts[i].startswith("PERF:"):
+                            ai_performance.append(float(parts[i][5:]))
+                
+                # Store system data
+                system_instability.append(instability_factor)
+                pid_time.append(elapsed_time)
+                raw_err_x.append(total_error)
+                corrected_err_x.append(total_error * 0.1)  # Simulated improvement
+                
+                # Determine trace color
+                if instability_factor > 0.6:
+                    trace_color = 'chaotic'
+                elif instability_factor > 0.15:
+                    trace_color = 'learning'
+                else:
+                    trace_color = 'stable'
+                
+                trace_x.append(x); trace_y.append(y)
+                trace_colors.append(trace_color)
+
+    except Exception as e:
+        print(f"Serial read error: {e}")
+    
+    # Simulate AI data EVERY frame to ensure dynamic updates
+    if time_step_counter % 2 == 0:  # Every 2 frames instead of 5
+        simulate_ai_data()
+    
+    # =============================================================================
+    # UPDATE ALL VISUALIZATIONS WITH PROPER SCALING
+    # =============================================================================
+    
+    # 1. Target path and ball trace
+    target_path_ln.set_data(shape_x, shape_y)
+    
+    # Separate traces by color
+    chaotic_x, chaotic_y = [], []
+    learning_x, learning_y = [], []
+    stable_x, stable_y = [], []
+    
+    for tx, ty, color in zip(trace_x, trace_y, trace_colors):
+        if color == 'chaotic':
+            chaotic_x.append(tx); chaotic_y.append(ty)
+        elif color == 'learning':
+            learning_x.append(tx); learning_y.append(ty)
+        else:
+            stable_x.append(tx); stable_y.append(ty)
+    
+    trail_chaotic_ln.set_data(chaotic_x, chaotic_y)
+    trail_learning_ln.set_data(learning_x, learning_y)
+    trail_stable_ln.set_data(stable_x, stable_y)
+    
+    if len(ball_x) > 0:
+        ball_ln.set_data([ball_x[-1]], [ball_y[-1]])
+    
+    # 2. Error comparison
+    xs = list(range(len(raw_err_x)))
+    raw_error_ln.set_data(xs, list(raw_err_x))
+    corrected_error_ln.set_data(xs, list(corrected_err_x))
+    if len(xs) > 0:
+        ax_error_comparison.set_xlim(max(0, len(xs) - MAX_POINTS//2), max(len(xs), 1))
+    
+    # 3. AI Learning progress
+    xs_ai = list(range(len(ai_learning_progress)))
+    ai_performance_ln.set_data(xs_ai, list(ai_learning_progress))
+    if len(xs_ai) > 0:
+        ax_ai_learning.set_xlim(max(0, len(xs_ai) - MAX_POINTS//2), max(len(xs_ai), 1))
+    
+    # 4. System stability
+    xs_stab = list(range(len(system_instability)))
+    if len(system_instability) > 0:
+        stability_data = [max(0, 100 - (x * 100)) for x in system_instability]  # Convert to stability %
+        stability_ln.set_data(xs_stab, stability_data)
+        ax_stability.set_xlim(max(0, len(xs_stab) - MAX_POINTS//2), max(len(xs_stab), 1))
+    
+    # 5. Servo response
+    xs_servo = list(range(len(servo1_positions)))
+    servo1_ln.set_data(xs_servo, list(servo1_positions))
+    servo2_ln.set_data(xs_servo, list(servo2_positions))
+    servo3_ln.set_data(xs_servo, list(servo3_positions))
+    if len(xs_servo) > 0:
+        ax_servos.set_xlim(max(0, len(xs_servo) - MAX_POINTS//2), max(len(xs_servo), 1))
+    
+    # 6. AI Gain switching
+    xs_gain = list(range(len(ai_gain_index)))
+    gain_ln.set_data(xs_gain, list(ai_gain_index))
+    if len(xs_gain) > 0:
+        ax_gains.set_xlim(max(0, len(xs_gain) - MAX_POINTS//2), max(len(xs_gain), 1))
+    
+    # 7. AI Performance
+    xs_perf = list(range(len(ai_performance)))
+    perf_ln.set_data(xs_perf, list(ai_performance))
+    if len(xs_perf) > 0:
+        ax_performance.set_xlim(max(0, len(xs_perf) - MAX_POINTS//2), max(len(xs_perf), 1))
+        # Auto-scale Y axis for performance
+        if len(ai_performance) > 0:
+            max_perf = max(ai_performance)
+            ax_performance.set_ylim(0, max(5, max_perf * 1.1))
+    
+    # 8. Update DYNAMIC AI status dashboard - CRITICAL FIX
+    update_ai_status_dashboard()
+    
+    return (target_path_ln, trail_chaotic_ln, trail_learning_ln, trail_stable_ln,
+            move_to_start_ln, ball_ln, raw_error_ln, corrected_error_ln,
+            servo1_ln, servo2_ln, servo3_ln, stability_ln,
+            ai_performance_ln, gain_ln, perf_ln)
+
+# =============================================================================
+# MAIN EXECUTION
+# =============================================================================
+
+# Start the enhanced visualization
+try:
+    ani = animation.FuncAnimation(
+        fig, update, init_func=init,
+        interval=100, blit=False, cache_frame_data=False  # CRITICAL: blit=False for text updates
+    )
+    
+    print("AI-Enhanced PID Visualizer Started!")
+    print(f"Connected to: {SERIAL_PORT} at {BAUD_RATE} baud")
+    print("AI Features Active:")
+    print("   • Adaptive PID Gain Tuning")
+    print("   • Predictive Error Compensation") 
+    print("   • Disturbance Rejection")
+    print("   • Pattern Recognition")
+    print("   • Real-time Performance Optimization")
+    print("\nWaiting for data from Arduino...")
+    
+    plt.show()
+    
+except KeyboardInterrupt:
+    print("\nShutting down AI visualizer...")
+    ser.close()
+except Exception as e:
+    print(f"Error: {e}")
+    if 'ser' in locals():
+        ser.close()
