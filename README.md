@@ -376,12 +376,13 @@ project-astra/
 ---
 
 ## 📚 Documentation & Resources
+- [simulation docs]_(Phase1/docs/Complete_Documentation.md)-Complete documenation
 
 ### **Academic Documents**
 - 📄 [Project Proposal](docs/major_proposal_optimized.pdf) - Complete academic proposal with literature review
-- 🔬 [AI Algorithms Explained](docs/ai_algorithms_explained.md) - Detailed algorithm documentation
-- 📊 [Performance Analysis](docs/performance_analysis.md) - Comprehensive system evaluation
-- 📖 [User Manual](docs/user_manual.md) - Complete operation and troubleshooting guide
+- 🔬 [AI Algorithms Explained](docs/API_Refrenece.md) - Detailed algorithm documentation
+- 📊 [Pin Configuration](docs/Pin_Configuration.md) - detailed pin config
+- 📖 [User Manual](docs/User_Manual.md) - Complete operation and troubleshooting guide
 
 ### **Video Documentation**
 - 🎥 [System Demo](docs/demo_videos/astra_demo.mp4) - Complete system demonstration
