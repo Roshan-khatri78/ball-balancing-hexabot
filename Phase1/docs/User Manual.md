@@ -10,8 +10,9 @@
 ### First Time Setup
 
 #### 1. Hardware Assembly
-1. Connect servos to ESP32 (pins 18, 19, 21)
-2. Connect LCD display via I2C (SDA: pin 22, SCL: pin 23)
+1. Connect servos to ESP32 (pins 23, 22, 21)
+2. Connect LCD display via I2C (SDA: pin 04, SCL: pin 15)
+  (note*pin d15 is a strapping pin,connect pull up resor across gnd to avoid noise issue,or connect to other GIPO pins)
 3. Connect 5 buttons for menu navigation
 4. Position webcam above platform
 5. Power system with 5V, 3A supply
