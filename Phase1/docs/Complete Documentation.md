@@ -99,16 +99,16 @@ A final-year BEI major project (2078 batch) from Purwanchal Campus, Dharan-08, S
 
 ```
 ESP32 Pin Connections:
-├── Servo 1 (X-axis): GPIO 18
-├── Servo 2 (Y-axis): GPIO 19  
-├── Servo 3 (Z-axis): GPIO 21
-├── LCD SDA: GPIO 22
-├── LCD SCL: GPIO 23
-├── Button Up: GPIO 32
-├── Button Down: GPIO 33
-├── Button Left: GPIO 25
-├── Button Right: GPIO 26
-└── Button Select: GPIO 27
+├── Servo 1 (X-axis): GPIO 21
+├── Servo 2 (Y-axis): GPIO 22  
+├── Servo 3 (Z-axis): GPIO 23
+├── LCD SDA: GPIO 04
+├── LCD SCL: GPIO 15
+├── Button cancel: GPIO 13 
+├── Button stop: GPIO 27
+├── Button Left: GPIO 14
+├── Button Right: GPIO 33
+└── Button Select: GPIO 26
 ```
 
 ### Assembly Instructions
