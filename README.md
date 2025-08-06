@@ -44,7 +44,7 @@ Phase 1 focuses on algorithm development, simulation, and documentation:
 - Performance analysis and optimization
 - Comprehensive documentation and research
 
-**📁 [View Phase 1 Details](Phase1/README.md)**
+**📁 [View Phase 1 Details](Phase1/Readme.md)**
 
 ### 🤖 **Phase 2: Hardware Implementation & Integration** 
 **Status**: 🚧 In Development | **Location**: `Phase2/` directory (Coming Soon)
