@@ -244,7 +244,8 @@ Ready for hardware implementation:
 ### **📊 Research Documents**
 - [Project Proposal](docs/major_proposal_optimized.pdf) - Academic project proposal
 - [Pin Configuration](docs/Pin%20Configuration.md) - Hardware interface planning
-- [Firmware Reference](firmware/midtermdefense.ino) - ESP32 control system code
+- [Firmware Reference](firmware/midtermdefense.ino) - ESP32 control system code 
+- [Simulation/Py](simulation/ds/Astra_plot.py) -simualtion using matplotlib,pyserail,numpy
 
 ---
 
