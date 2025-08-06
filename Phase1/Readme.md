@@ -1,8 +1,8 @@
 # 🚀 Project ASTRA - Phase 1: AI-Enhanced Ball Balancing Simulation
 
-[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](../LICENSE)
-[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://python.org)
-[![OpenCV](https://img.shields.io/badge/OpenCV-4.0+-red.svg)](https://opencv.org)
+[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](../LICENSE)  
+[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://python.org)  
+[![OpenCV](https://img.shields.io/badge/OpenCV-4.0+-red.svg)](https://opencv.org)  
 [![ESP32](https://img.shields.io/badge/ESP32-Arduino-orange.svg)](https://www.espressif.com/en/products/socs/esp32)
 
 ---
@@ -11,9 +11,9 @@
 
 This phase focuses on **simulation and AI algorithm development** for the ASTRA ball balancing hexabot project.
 
-- Realistic ball physics and platform simulation using Python.
-- AI-enhanced PID control algorithms validated in simulation.
-- ESP32 firmware adapted to interface with simulation environment.
+- Realistic ball physics and platform simulation using Python.  
+- AI-enhanced PID control algorithms validated in simulation.  
+- ESP32 firmware adapted to interface with simulation environment.  
 
 The **physical hardware integration and deployment will be done in Phase 2** and uploaded separately.
 
@@ -22,13 +22,13 @@ The **physical hardware integration and deployment will be done in Phase 2** and
 ## 🧪 Simulation Components
 
 ### Python Simulation
-- Ball and platform physics modeled with OpenCV visualization.
-- AI PID gain optimization, predictive error compensation, and disturbance rejection.
+- Ball and platform physics modeled with OpenCV visualization.  
+- AI PID gain optimization, predictive error compensation, and disturbance rejection.  
 - Real-time data plotting with 8-panel dashboard.
 
 ### Firmware (ESP32)
-- Arduino code tested against simulated inputs.
-- AI-enhanced PID control loops.
+- Arduino code tested against simulated inputs.  
+- AI-enhanced PID control loops.  
 - Serial communication for data streaming to Python visualizer.
 
 ---
