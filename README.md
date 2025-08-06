@@ -156,7 +156,7 @@ cd Phase2/
 
 | Name | Specialization | Key Contributions | GitHub |
 |------|----------------|-------------------|---------|
-| **Sneha Yadav** | AI/ML & Software Architecture | AI algorithms, predictive compensation, visualization | [rudrakhatri](https://github.com/rudrakhatri) |
+| **Sneha Yadav** | AI/ML & Software Architecture | AI algorithms, predictive compensation, visualization | [Sneha Yadav](https://github.com/Snehayyy) |
 | **Rudra Khatri** | Hardware Integration & Control | Servo control, platform design, system integration | [Roshan-khatri78](https://github.com/Roshan-khatri78/) |  
 | **Bishakha Pokhrel** | Testing & Documentation | ESP32 firmware, adaptive PID, optimization | [bishakhapokhrel](https://github.com/bishakhapokhrel) |
 | **Susant Dahal** | Embedded Systems & PID Control | System validation, UI, technical documentation | [sushantdahal](https://github.com/sushantdahal) |
