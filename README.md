@@ -1,100 +1,148 @@
-🚀 ASTRA - AI Ball Balancing Platform
 <div align="center">
-Show Image
-Show Image
-Show Image
-Intelligent hexagonal platform that balances a ball using AI and computer vision
-Final Year Project | IOE 2078 Batch | Purwanchal Campus
-Features • Hardware • Quick Start • Team
+
+# ⚡ ASTRA — AI Ball Balancing Platform
+
+**An intelligent hexagonal platform that balances a ball using AI and computer vision**
+
+![MIT License](https://img.shields.io/badge/License-MIT-00e5a0?style=flat-square)
+![ESP32](https://img.shields.io/badge/MCU-ESP32-blue?style=flat-square)
+![OpenCV](https://img.shields.io/badge/Vision-OpenCV-red?style=flat-square)
+![C++](https://img.shields.io/badge/Language-C%2B%2B-orange?style=flat-square)
+![IOE 2078](https://img.shields.io/badge/IOE-2078%20Batch-purple?style=flat-square)
+
+*Final Year Project · Purwanchal Campus*
+
 </div>
 
-🎯 What It Does
+---
 
-Tracks ball position using computer vision
-AI-powered adaptive control system
-Real-time learning and correction
-Interactive display interface
+## 🧠 What It Does
 
+| Feature | Description |
+|---|---|
+| 👁 **Vision Tracking** | OpenCV ball detection via USB webcam at 720p/15fps |
+| 🤖 **Smart Control** | AI learns and adapts in real-time — no manual tuning |
+| ⚡ **Dual ESP32** | Separate motor and UI control for responsive operation |
+| 📊 **Live Graphs** | 2" TFT display with rotary encoder for real-time monitoring |
 
-✨ Features
-🧠 Smart Control - AI learns and adapts in real-time
-📹 Vision Tracking - OpenCV ball detection
-🎮 Touch Interface - 2" TFT display + rotary encoder
-⚡ Dual ESP32 - Separate motor & UI control
-📊 Live Graphs - Real-time performance monitoring
+---
 
-🔧 Hardware
-Current Build (Phase 2)
-💰 Cost: ~$90
-🎯 Accuracy: ±0.05°
-⚙️ Motors: NEMA 17 Steppers
-PartQuantityESP32 Dev Board2NEMA 17 Stepper Motor3TB6600 Stepper Driver324V 5A SMPS12.0" TFT LCD1Rotary Encoder1USB Webcam (720p)1
-Budget Build (Phase 1)
-💰 Cost: ~$35
-🎯 Accuracy: ±1-2°
-⚙️ Motors: MG996R Servos
-PartQuantityESP32 Dev Board1MG996R Servo Motor316x2 I2C LCD1Push Buttons5USB Webcam (720p)15V Power Supply1
+## 📊 Performance
 
-📊 Performance
-MetricValueControl Loop50 HzPosition Accuracy±0.005 unitsStabilization5-30 secondsAI Learning Time~4 seconds
+| Metric | Value |
+|---|---|
+| Control Loop | 50 Hz |
+| Position Accuracy | ±0.005 units |
+| Stabilization Time | ~5 seconds |
+| AI Learning Time | ~4 seconds |
 
-🚀 Quick Start
-Phase 1 - Simulation & Servo Build
-bashgit clone https://github.com/Roshan-khatri78/ball-balancing-hexabot.git
-cd ball-balancing-hexabot/Phase1
+---
+
+## 🔧 Choose Your Build
+
+### Phase 1 — Servo Build `~$35`
+
+> Best for: low cost, simple wiring, learning projects
+
+| Component | Spec |
+|---|---|
+| Motors | MG996R Servos ×3 |
+| Board | ESP32 Dev Board |
+| UI | I2C LCD + Push Buttons |
+| Camera | USB Webcam 720p |
+| Power | 15V PSU |
+| Accuracy | ±1–2° |
+
+### Phase 2 — Stepper Build `~$90` ⭐ Recommended
+
+> Best for: high precision, research, publication-ready results
+
+| Component | Spec |
+|---|---|
+| Motors | NEMA 17 Steppers ×3 |
+| Driver | TB6600 ×3 @ 24V 5A |
+| Board | ESP32 Dev Board |
+| UI | 2" TFT + Rotary Encoder |
+| Camera | USB Webcam 720p |
+| Accuracy | ±0.05° |
+
+---
+
+## 🚀 Quick Start
+
+**1. Clone the repo**
+```bash
+git clone https://github.com/Roshan-khatri78/ball-balancing-hexabot.git
+cd ball-balancing-hexabot
+```
+
+**2. Phase 1 — Simulation & Servo Build**
+```bash
+cd Phase1
 # Follow Phase1/README.md
-Phase 2 - Stepper Build (Coming Soon)
-bashcd Phase2
+```
+
+**3. Phase 2 — Stepper Build**
+```bash
+cd Phase2
 # Follow Phase2/README.md
+```
 
-💡 Which Build?
-Choose Servos if you want:
+---
 
-Low cost ($35)
-Simple wiring
-Learning project
+## 📁 Project Structure
 
-Choose Steppers if you need:
-
-High precision (±0.05°)
-Research quality
-Publication-ready results
-
-
-👥 Team
-IOE 2078 Batch - Purwanchal Campus, Dharan
-MemberRoleSneha YadavAI/MLRudra KhatriHardwareBishakha PokhrelFirmwareSusant DahalTesting
-Supervisor: Bishnu Chaudhary
-
-📂 Structure
+```
 ball-balancing-hexabot/
-├── Phase1/              # Simulation + Servo prototype
+├── Phase1/               # Simulation & Servo prototype
 │   ├── simulation/
-│   ├── docs/
-│   └── ai_models/
-│
-├── Phase2/              # Stepper implementation
+│   ├── ai_models/
+│   └── firmware/
+├── Phase2/               # Stepper implementation
 │   ├── firmware/
-│   │   ├── motor_controller/
-│   │   └── ui_controller/
-│   ├── hardware/
-│   └── visualization/
-│
-└── shared/              # Common resources
+│   ├── motor_controller/
+│   └── ui_controller/
+├── docs/
+│   └── hardware/
+├── visualization/
+├── shared/               # Common resources
+└── README.md
+```
 
-🤝 Contributing
+---
+
+## 👥 Team · IOE 2078 · Purwanchal Campus
+
+| Name | Role |
+|---|---|
+| Dharan Member | ML / AI |
+| Sneha Yadav | Firmware |
+| Rudra Khatri | Hardware |
+| Bishaka Pokhrel | Firmware |
+| Susant Daha | Testing |
+| Bishnu Chaudhary | Supervisor |
+
+---
+
+## 🤝 Contributing
+
 Contributions welcome!
-bashfork → branch → commit → push → pull request
 
-📜 License
-MIT License © 2024 ASTRA Team
+```bash
+git checkout -b your-feature
+git commit -m "your message"
+git push origin your-feature
+# open a pull request
+```
 
-📞 Contact
-📧 rudrakhatri456@gmail.com
-🐛 Report Issues
-💬 Discussions
+---
 
 <div align="center">
-⭐ Star this repo if you find it useful!
-Made with ❤️ by IOE 2078 Batch Students
+
+MIT License © 2024 ASTRA Team
+
+📧 [rudrakhatri456@gmail.com](mailto:rudrakhatri456@gmail.com) · ⭐ Star this repo if you find it useful!
+
+*Made with ❤️ by IOE 2078 Batch Students*
+
 </div>
