@@ -39,22 +39,68 @@ The system is built in two phases — a low-cost servo prototype and a high-prec
 
 ---
 
+## 🔄 Why We Moved from Phase 1 to Phase 2
+
+Phase 1 was built as a working prototype to validate the concept quickly and cheaply. Once the core logic (vision + PID + serial) was confirmed to work, Phase 2 addressed every hardware limitation that Phase 1 exposed.
+
+**Phase 1 Limitations (Servo Build)**
+
+| Problem | Impact |
+|---|---|
+| Servos have ±1–2° angular backlash | Ball oscillated around setpoint, couldn't settle cleanly |
+| PWM-based control is coarse | No microstepping — jerky platform motion |
+| Low torque at mid-range angles | Platform sagged under ball weight, introduced mechanical error |
+| I2C LCD too slow to update | Couldn't monitor PID values in real-time during tuning |
+| No encoder feedback on servos | Open-loop actuation — position drift over time |
+
+**Why Phase 2 Fixes This (Stepper Build)**
+
+| Improvement | Benefit |
+|---|---|
+| NEMA 17 steppers — 200 steps/rev | Deterministic position, zero backlash |
+| TB6600 microstepping (1/32 step) | Smooth, fine platform motion |
+| Higher torque at all angles | Stable platform regardless of ball position |
+| TFT display + rotary encoder | Live PID tuning without reflashing firmware |
+| Dual ESP32 architecture | Motor control and UI run on separate cores — no lag |
+| Watchdog safety system | Auto-homes platform if PC disconnects mid-run |
+
+> **Bottom line:** Phase 1 proves the idea. Phase 2 makes it precise enough for research and publication.
+
+---
+
 ## 🧠 How It Works
 
+The system runs as a continuous closed-loop across three modules:
+
+**Module 1 — Vision Processing (PC)**
+- Mobile phone camera streams live video to PC via DroidCam
+- OpenCV pipeline: Gaussian blur → HSV thresholding → morphological open/close → contour detection → image moments → EMA smoothing
+- Outputs ball center coordinates (x, y) relative to platform center
+
+**Module 2 — Control & Actuation (ESP32 Master)**
+- Receives coordinates over UART serial communication
+- Computes positional error and runs discrete PID controller
+- Converts PID output to platform tilt angles via inverse kinematics
+- Commands 3 stepper motors through TB6600 drivers
+- Watchdog safety: homes motors if serial signal is lost
+
+**Module 3 — UI & Monitoring (ESP32 Display)**
+- 2" TFT display shows live ball position, error, and system status
+- Rotary encoder allows real-time PID parameter tuning without reflashing
+
 ```
-Camera (DroidCam) → PC OpenCV → Error Calculation → Serial (UART)
-       → ESP32 Master (PID + Inverse Kinematics) → Stepper Drivers
-       → NEMA 17 Motors → Platform Tilt → Ball Corrected
-       ↑_________________________feedback loop________________________|
+┌─────────────────────────────────────────────────────────────┐
+│                     CLOSED LOOP FLOW                        │
+├─────────────┬──────────────┬──────────────┬─────────────────┤
+│  📷 Camera  │  🖥️ PC/OpenCV │  📡 ESP32    │  ⚙️ Platform    │
+│  (DroidCam) │              │  Master      │                 │
+│             │  HSV detect  │              │                 │
+│  Capture  ──►  Track ball ──►  PID calc  ──►  Tilt motors   │
+│  frame      │  Compute err │  Inv. kinem  │  Correct ball   │
+│             │  Send X,Y    │  Step motors │                 │
+│      ◄──────────────────────────────────── Visual feedback  │
+└─────────────┴──────────────┴──────────────┴─────────────────┘
 ```
-
-**Three modules:**
-
-1. **Vision Processing (PC)** — Mobile phone camera streams via DroidCam. OpenCV applies Gaussian blur → HSV thresholding → morphological operations → contour detection → image moments to extract ball center coordinates. EMA smoothing reduces noise.
-
-2. **Control & Actuation (ESP32 Master)** — Receives ball coordinates over UART. Runs discrete PID to generate tilt commands. Converts tilt angles to stepper steps via inverse kinematics. Includes watchdog safety that homes motors if communication is lost.
-
-3. **UI & Monitoring (ESP32 Display)** — TFT display shows live system status. Rotary encoder allows on-the-fly PID parameter tuning.
 
 ---
 
