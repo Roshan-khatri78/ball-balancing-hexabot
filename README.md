@@ -11,6 +11,8 @@
 ![C++](https://img.shields.io/badge/Firmware-C%2B%2B-orange?style=flat-square)
 ![IOE 2078](https://img.shields.io/badge/IOE-2078%20Batch-purple?style=flat-square)
 
+![ASTRA Platform](Phase2/images/hardware/frontastra.jpg)
+
 *Final Year Project · Department of Electronics and Computer Engineering*
 *Purwanchal Campus, Institute of Engineering, Tribhuvan University · March 2026*
 
